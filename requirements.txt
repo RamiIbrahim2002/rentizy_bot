@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+openai
+chromadb
+numpy
+jinja2
+python-dotenv

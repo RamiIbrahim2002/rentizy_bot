@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rentizy Chat Assistant</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7fa;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #chatbox {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: white;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message-content {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .user-message {
+            align-items: flex-end;
+        }
+
+        .user-message .message-content {
+            background-color: #4CAF50;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .assistant-message .message-content {
+            background-color: #f1f1f1;
+            border-bottom-left-radius: 5px;
+        }
+
+        .message-role {
+            font-weight: bold;
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-bottom: 3px;
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        #message {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        button {
+            padding: 12px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .role-switch {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .role-switch label {
+            margin-right: 10px;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 10px 15px;
+            background-color: #f1f1f1;
+            border-radius: 18px;
+            margin-bottom: 15px;
+            width: fit-content;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        .error-message {
+            color: #d32f2f;
+            background-color: #ffebee;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .status-bar {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #666;
+            text-align: center;
+        }
+
+        .property-details {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4CAF50;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">Rentizy Chat</div>
+        <div class="role-switch">
+            <label for="roleToggle">I am a:</label>
+            <button id="roleToggle" onclick="toggleRole()">Tenant</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="chatbox"></div>
+
+        <div class="typing-indicator" id="typingIndicator">Assistant is typing...</div>
+
+        <div class="input-container">
+            <input type="text" id="message" placeholder="Type your message..." autofocus>
+            <button onclick="sendMessage()">Send</button>
+        </div>
+
+        <div class="status-bar" id="statusBar"></div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://127.0.0.1:8000';
+        const chatbox = document.getElementById('chatbox');
+        const messageInput = document.getElementById('message');
+        const roleToggleBtn = document.getElementById('roleToggle');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const statusBar = document.getElementById('statusBar');
+        const userId = localStorage.getItem("chat_user_id") || (() => {
+            const id = "user_" + Math.floor(Math.random() * 1000000);
+            localStorage.setItem("chat_user_id", id);
+            return id;
+        })();
+    
+        let isTenant = localStorage.getItem("isTenant") !== 'false';
+    
+        function toggleRole() {
+            isTenant = !isTenant;
+            localStorage.setItem("isTenant", isTenant);
+            roleToggleBtn.textContent = isTenant ? 'Tenant' : 'Property Owner';
+        }
+    
+        // This is the fetch and processing section of the JavaScript
+// Replace this part in your chat_interface.html file
+
+async function sendMessage() {
+    const message = messageInput.value.trim();
+    if (!message) return;
+
+    addMessageToChat(isTenant ? "Tenant" : "Owner", message, 'user-message');
+    messageInput.value = '';
+    typingIndicator.style.display = 'block';
+
+    try {
+        const res = await fetch(`${BASE_URL}/api/send`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                message: message,
+                role: isTenant ? 'tenant' : 'owner',
+                user_id: userId
+            })
+        });
+
+        const data = await res.json();
+        if (data && data.assistant) {
+            // Assistant generated a response
+            addMessageToChat("Assistant", data.assistant, 'assistant-message');
+        } else if (data && data.status === "ignored") {
+            // Assistant chose to ignore — no visible response
+            console.log(`[INFO] Assistant ignored message. Reason: ${data.reason || "Unknown"}`);
+            
+            // Optional: Display a subtle indicator that the message was seen but not answered
+            statusBar.textContent = `${new Date().toLocaleTimeString()}: ${data.reason || "Message received but no response required"}`;
+            setTimeout(() => { statusBar.textContent = ''; }, 5000);
+        } else if (data.saved === true) {
+            // For property owners, confirm their information was saved
+            if (!isTenant) {
+                statusBar.textContent = "✅ Your information has been saved for future reference.";
+                setTimeout(() => { statusBar.textContent = ''; }, 5000);
+            }
+        } else {
+            console.log("[INFO] Message processed but no specific action taken");
+        }
+    } catch (err) {
+        console.error("[ERROR]", err);
+        statusBar.textContent = `Error: ${err.message}`;
+        setTimeout(() => { statusBar.textContent = ''; }, 5000);
+    } finally {
+        typingIndicator.style.display = 'none';
+    }
+}
+        function addMessageToChat(role, message, className) {
+            const div = document.createElement('div');
+            div.className = `message ${className}`;
+            const time = new Date().toLocaleTimeString();
+    
+            div.innerHTML = `
+                <div class="message-content">
+                    <div class="message-role">${role}</div>
+                    ${message}
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+            chatbox.appendChild(div);
+            scrollToBottom();
+        }
+    
+        function scrollToBottom() {
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
+    
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    
+        toggleRole();
+    </script>
+        
+</body>
+</html>
