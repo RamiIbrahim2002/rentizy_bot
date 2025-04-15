@@ -4,6 +4,8 @@ import json
 from openai import OpenAI
 from app.logger import logger
 from app.helpers.helpers import log_llm_input
+from dotenv import load_dotenv
+load_dotenv()
 
 client = OpenAI(api_key = os.environ.get("OPENAI_API_KEY"))
 
