@@ -46,11 +46,12 @@ Respond strictly in this JSON format:
 
 def call_openai_rag(query: str, context: str) -> str:
     system_prompt = """
-You are a helpful assistant for a property rental platform.
-Use the provided conversation history to answer the tenant's question.
-Be concise, friendly, and only use relevant information from the context.
-Use only the most recent statements. If older statements contradict newer ones, trust the newest.
-"""
+ You are a helpful assistant for a property rental platform.
+ Treat each line of context as the current snapshot of the property.
+ Answer exactly what the tenant asks—do not volunteer any other details.
+ Be brief, friendly, and use only the relevant fact from the context.
+ """
+
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": f"Tenant's question: {query}\n\nContext:\n{context}"}
